@@ -1,0 +1,12 @@
+version: 1.0
+api-version: 1.13
+name: TheBackrooms
+main: com.infinitymeme.thebackrooms.Main
+author: infinitymeme
+description: The hum of flourescent lights and stench of old carpet surrounds you.
+load: STARTUP
+commands:
+    brsetup:
+        aliases:
+        description: Sets up the backrooms.
+        usage: "Usage: /brsetup "
