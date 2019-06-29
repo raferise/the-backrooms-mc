@@ -7,6 +7,7 @@ This plugin overwrites the nether's chunk generation to create the backrooms. Wh
 * Blocks placed and broken undo when you look away
 * Falling through the floor teleports you to above the ceiling
 * Walking on the ceiling removes the blocks below you (which reappear when you look away)
+* You may not perish. (You can only escape through portals)
 * HE COMES (uses Jitse's NPCLib)
 
 This plugin also affects the overworld. Walking backwards into a wall atleast 3x3 and 2 blocks deep causes the backrooms to be cloned to the overworld, teleporting you to the full backrooms a few moments after entering the room.
