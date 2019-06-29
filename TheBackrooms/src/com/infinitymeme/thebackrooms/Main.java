@@ -47,6 +47,7 @@ public class Main extends JavaPlugin implements Listener {
 	private LinkedList<Player> isfalling;
 	private LinkedList<Player> portalopen;
 	Player iswatched;
+	int watchedcd = 100;
 	
 	private NPCLib library;
 	private Skin hskin;
@@ -189,29 +190,29 @@ public class Main extends JavaPlugin implements Listener {
 				}
 				
 				if ((int)(Math.random()*250)==0) p.playSound(p.getLocation().add(Vector.getRandom().multiply(10).setY(220)), Sound.AMBIENT_CAVE, 100, 0);
-				if (iswatched==null) { 
-					Location predicted = p.getLocation().add(p.getLocation().getDirection().multiply(5));
-					Location predicted2 = predicted.clone().add(p.getLocation().getDirection().multiply(0.5));
-					Location predicted3 = predicted.clone().subtract(p.getLocation().getDirection());
-					predicted.setY(220);
-					predicted2.setY(220);
-					Location spawnloc = predicted.clone();
-					Location spawnloceye;
-					int attempts = 0;
-					do {
-						if (attempts == 20) return;
-						spawnloc.add((int)(Math.random()*4)-2,0,(int)(Math.random()*4)-2);
-						spawnloceye = spawnloc.clone().add(0,1.62,0);
-						attempts++;
-					//conditions:
-						//must not be closer than 5 blocks to predicted loc
-						//must not be closer than 10 blocks to player loc
-						//must not be filled
-						//must be visible from predicted loc
-						//must not be visible from player loc
-						//must not be visible from 1 block after or before predicted
-					} while ((spawnloc.distance(predicted)<5)||(!spawnloc.getWorld().getBlockAt(spawnloc).getType().equals(Material.AIR))||(!lineOfSight(predicted,spawnloceye)||(lineOfSight(predicted2,spawnloceye))||(lineOfSight(predicted3,spawnloceye))||(lineOfSight(p.getEyeLocation(),spawnloceye))));
-					if ((int)(Math.random()*10)==0) {
+				if (watchedcd==0) {
+					if (iswatched==null) { 
+						Location predicted = p.getLocation().add(p.getLocation().getDirection().multiply(5));
+						Location predicted2 = predicted.clone().add(p.getLocation().getDirection().multiply(0.5));
+						Location predicted3 = predicted.clone().subtract(p.getLocation().getDirection());
+						predicted.setY(220);
+						predicted2.setY(220);
+						Location spawnloc = predicted.clone();
+						Location spawnloceye;
+						int attempts = 0;
+						do {
+							if (attempts == 20) return;
+							spawnloc.add((int)(Math.random()*4)-2,0,(int)(Math.random()*4)-2);
+							spawnloceye = spawnloc.clone().add(0,1.62,0);
+							attempts++;
+						//conditions:
+							//must not be closer than 5 blocks to predicted loc
+							//must not be closer than 10 blocks to player loc
+							//must not be filled
+							//must be visible from predicted loc
+							//must not be visible from player loc
+							//must not be visible from 1 block after or before predicted
+						} while ((spawnloc.distance(predicted)<5)||(!spawnloc.getWorld().getBlockAt(spawnloc).getType().equals(Material.AIR))||(!lineOfSight(predicted,spawnloceye)||(lineOfSight(predicted2,spawnloceye))||(lineOfSight(predicted3,spawnloceye))||(lineOfSight(p.getEyeLocation(),spawnloceye))));
 						spawnloc.setDirection(homingvector(spawnloceye, predicted.add(0,1.62,0)));
 						NPC herobrine = library.createNPC(hskin);
 						herobrine.create(spawnloc);
@@ -219,7 +220,8 @@ public class Main extends JavaPlugin implements Listener {
 						HEWATCHES(p,herobrine,0);
 						iswatched = p;
 					}
-					
+				} else {
+					watchedcd--;
 				}
 			} else if ((p.getWorld().getEnvironment().equals(Environment.NORMAL)&&(!portalopen.contains(p)))) {
 				int zz=0;
@@ -385,12 +387,13 @@ public class Main extends JavaPlugin implements Listener {
 		Location he = herobrine.getLocation().clone().add(0,1.62,0);
 		if (lineOfSight(p.getEyeLocation(), he)) {
 			Bukkit.getScheduler().runTaskLater(this, new Runnable() {public void run() {
-				if (lineOfSight(p.getEyeLocation(), he)&&(lookingAt(p, he, 0.4))) {
-					p.playSound(he, Sound.ENTITY_ENDERMAN_STARE, 100, 0.6f);
+				if (lineOfSight(p.getEyeLocation(), he)&&(lookingAt(p, he, 0.7))) {
+					p.playSound(he, Sound.ENTITY_ENDERMAN_STARE, 100, 0.5f);
 					p.addPotionEffect(new PotionEffect(PotionEffectType.CONFUSION, 500, 1, false, false, false), true);
 					p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 500, 5, false, false, false), true);
 					EYECONTACT(p, herobrine, 0);
 				} else {
+					watchedcd = 200;
 					herobrine.destroy();
 					iswatched = null;
 				}
@@ -408,7 +411,7 @@ public class Main extends JavaPlugin implements Listener {
 	
 	public void EYECONTACT(Player p, NPC herobrine, int ticks) {
 		Location he = herobrine.getLocation().clone().add(0,1.62,0);
-		if (lineOfSight(p.getEyeLocation(), he)&&(lookingAt(p, he, 0.4))) {
+		if (lineOfSight(p.getEyeLocation(), he)&&(lookingAt(p, he, 0.7))) {
 			if ((ticks > 160)||(p.getLocation().distance(herobrine.getLocation()) < 3)) {
 				p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 40, 1, false, false, false),true);
 				p.stopSound(Sound.ENTITY_ENDERMAN_STARE);
