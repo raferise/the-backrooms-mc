@@ -15,5 +15,5 @@ This plugin also affects the overworld. Walking backwards into a wall atleast 3x
 
 When the plugin boots, you will need to run `brsetup` from the console. This does the following to setup the backrooms:
 * Deletes the world_nether folder to ensure that all chunks are generated with The Backrooms algorithm
-* Deletes DIM-1 in the world folder (so Bukkit doesn't believe that it's a singleplayer-format world)
+* Deletes DIM-1 in the world folder (so Bukkit doesn't believe that it's an old format world)
 * Writes `TheBackrooms` to `worlds.world_nether.generator` in `bukkit.yml`
