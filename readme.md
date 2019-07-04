@@ -1,6 +1,9 @@
 # The Backrooms (MC 1.13.2)
 Made with Jitse's NPCLib (https://github.com/JitseB/NPCLib)
 
+## Warning: This will mess up your world. Make a copy before using this plugin.
+This plugin will delete your nether dimension, and replace blocks in the overworld wherever you enter the backrooms.
+
 ## What it does
 This plugin overwrites the nether's chunk generation to create the backrooms. While in the backrooms...
 * Spooky noises play
