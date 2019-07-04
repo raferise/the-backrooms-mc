@@ -2,7 +2,7 @@
 Made with Jitse's NPCLib (https://github.com/JitseB/NPCLib)
 
 ## Warning: This will mess up your world. Make a backup before using this plugin.
-This plugin will delete your nether dimension, and has the possibility to not revert blocks it replaced in the overworld if something were to go wrong.
+This plugin will delete your nether dimension, and will mess up block data where it generates the backrooms enterances. Although it will make an effort to replace the blocks, tile data like container contents, sign data, and etc will likely be lost.
 
 ## What it does
 This plugin overwrites the nether's chunk generation to create the backrooms. While in the backrooms...
