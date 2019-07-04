@@ -21,6 +21,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.FallingBlock;
 import org.bukkit.entity.Player;
@@ -64,7 +65,8 @@ public class Main extends JavaPlugin implements Listener {
 		if ((gen == null)||(!(gen.toString().equals("TheBackrooms")))) {
 			Bukkit.getScheduler().runTaskLater(this, new Runnable() {public void run() {
 				System.out.println(ChatColor.RED+"SETUP ERROR: Nether generation not using THE BACKROOMS. Please type "+ChatColor.DARK_PURPLE+"brsetup"+ChatColor.RED+" in the console.");
-				System.out.println(ChatColor.RED+"***WARNING, this will delete the current Nether FOREVER***");
+				System.out.println(ChatColor.RED+"***WARNING, this will delete the current Nether FOREVER upon use.***");
+				System.out.println(ChatColor.RED+"***MAKE A BACKUP OF YOUR WORLD (all dimensions) before using this plugin.***");
 			}},1);
 			return;
 		}
@@ -246,7 +248,7 @@ public class Main extends JavaPlugin implements Listener {
 						}
 					}
 					Location room = new Location(p.getWorld(), p.getLocation().getBlockX()+(xx*(START_SIZE+2)),p.getLocation().getBlockY(),p.getLocation().getBlockZ());
-					generateRoom(room, START_SIZE, START_SIZE);
+					BlockData[][][] backup = generateRoom(room, START_SIZE, START_SIZE);
 					LinkedList<Location> locs = new LinkedList<Location>();
 					LinkedList<BlockData> fill = new LinkedList<BlockData>();
 					for (int y=0; y<3; y++) {
@@ -272,7 +274,8 @@ public class Main extends JavaPlugin implements Listener {
 					cleanupEntrance(p, 
 							p.getEyeLocation().add(ppp.getDirection()),
 							room,
-							locs, fill);
+							locs, fill,
+							backup);
 				} else if (zz!=0) {
 					for (int z=1; z<=2; z++) {
 						for (int y=0; y<3; y++) {
@@ -284,7 +287,7 @@ public class Main extends JavaPlugin implements Listener {
 						}
 					}
 					Location room = new Location(p.getWorld(), p.getLocation().getBlockX(),p.getLocation().getBlockY(),p.getLocation().getBlockZ()+(zz*(START_SIZE+2)));
-					generateRoom(room, START_SIZE, START_SIZE);
+					BlockData[][][] backup = generateRoom(room, START_SIZE, START_SIZE);
 					LinkedList<Location> locs = new LinkedList<Location>();
 					LinkedList<BlockData> fill = new LinkedList<BlockData>();
 					for (int y=0; y<3; y++) {
@@ -311,13 +314,14 @@ public class Main extends JavaPlugin implements Listener {
 					cleanupEntrance(p, 
 							p.getEyeLocation().add(ppp.getDirection()),
 							room,
-							locs, fill);
+							locs, fill,
+							backup);
 				}
 			}
 		}
 	}
 	
-	public void cleanupEntrance(Player p, Location nosee, Location near, LinkedList<Location> locs, LinkedList<BlockData> fill) {
+	public void cleanupEntrance(Player p, Location nosee, Location near, LinkedList<Location> locs, LinkedList<BlockData> fill, BlockData[][][] backup) {
 		if (p.getLocation().distance(near) < START_SIZE-1) {
 			p.playSound(p.getLocation(), Sound.BLOCK_PORTAL_TRIGGER, 100, 0);
 			World w = Bukkit.getWorld("world_nether");
@@ -327,6 +331,11 @@ public class Main extends JavaPlugin implements Listener {
 			for (int x=-4; x<=4; x++) {
 				for (int z=-4; z<=4; z++) {
 					w.loadChunk(x, z, true);
+				}
+			}
+			for (Entity e : p.getNearbyEntities(20, 20, 20)) {
+				if ((e instanceof FallingBlock)&&(!e.hasGravity())) {
+					e.remove();
 				}
 			}
 			for (int i=0; i<locs.size(); i++) {
@@ -342,14 +351,35 @@ public class Main extends JavaPlugin implements Listener {
 				p.setGameMode(GameMode.SURVIVAL);
 				p.playSound(p.getLocation(), Sound.BLOCK_END_PORTAL_SPAWN, 100, 0);
 				portalopen.remove(p);
+				cleanupRoom(near,backup);
 			}},150);
 			
 		} else if (p.getLocation().distance(near)<START_SIZE+5) {
 			Bukkit.getScheduler().runTaskLater(this, new Runnable() {public void run() {
-				cleanupEntrance(p,nosee,near,locs,fill);
+				cleanupEntrance(p,nosee,near,locs,fill,backup);
 			}},1);
 		} else {
+			World wo = Bukkit.getWorld("world");
+			for (Entity e : p.getNearbyEntities(20, 20, 20)) {
+				if ((e instanceof FallingBlock)&&(!e.hasGravity())) {
+					e.remove();
+				}
+			}
+			for (int i=0; i<locs.size(); i++) {
+				wo.getBlockAt(locs.get(i)).setBlockData(fill.get(i));
+			}
 			portalopen.remove(p);
+			cleanupRoom(near,backup);
+		}
+	}
+	
+	public void cleanupRoom(Location l, BlockData[][][] backup) {
+		for (int x=-START_SIZE-1; x<=START_SIZE+1; x++) {
+			for (int y=-2; y<=7; y++) {
+				for (int z=-START_SIZE-1; z<=START_SIZE+1; z++) {
+					l.getWorld().getBlockAt(l.clone().add(x,y,z)).setBlockData(backup[x+START_SIZE+1][y+2][z+START_SIZE+1]);
+				}
+			}
 		}
 	}
 	
@@ -461,11 +491,19 @@ public class Main extends JavaPlugin implements Listener {
 		}
 	}
 	
-	public void generateRoom(Location l, int xwid, int zwid) {
+	public BlockData[][][] generateRoom(Location l, int xwid, int zwid) {
 		World w = Bukkit.getWorld("world_nether");
 		for (int x=-4; x<=4; x++) {
 			for (int z=-4; z<=4; z++) {
 				w.loadChunk(x, z, true);
+			}
+		}
+		BlockData[][][] backup = new BlockData[3+(2*xwid)][10][3+(2*zwid)];
+		for (int x=-xwid-1; x<=xwid+1; x++) {
+			for (int y=-2; y<=7; y++) {
+				for (int z=-zwid-1; z<=zwid+1; z++) {
+					backup[x+xwid+1][y+2][z+zwid+1] = l.getWorld().getBlockAt(l.clone().add(x,y,z)).getBlockData();
+				}
 			}
 		}
 		for (int x=-xwid; x<=xwid; x++) {
@@ -494,7 +532,7 @@ public class Main extends JavaPlugin implements Listener {
 				}
 			}
 		}
-		
+		return backup;
 	}
 
 	
@@ -517,8 +555,20 @@ public class Main extends JavaPlugin implements Listener {
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 		if (cmd.getName().equals("brsetup")) {
 			if (!(sender instanceof Player)) {
-				dosetup = true;
-				Bukkit.shutdown();
+				if ((args.length > 0)&&(args[0].equals("confirm"))) {
+					dosetup = true;
+					for (Player p : Bukkit.getOnlinePlayers()) {
+						p.kickPlayer("The backrooms is setting up.");
+					}
+					Bukkit.getScheduler().runTaskLater(this, new Runnable() {public void run() {
+						Bukkit.shutdown();
+					}},5);
+				} else {
+					sender.sendMessage(ChatColor.RED+"WARNING: THIS PLUGIN MAY IRREVERSIBLY DAMAGE YOUR WORLD. MAKE A BACKUP. YES, OF ALL DIMENSIONS. "+ChatColor.GRAY+"[...]");
+					Bukkit.getScheduler().runTaskLater(this, new Runnable() {public void run() {
+						sender.sendMessage(ChatColor.RED+"Once you have done so, type "+ChatColor.DARK_PURPLE+"brsetup confirm"+ChatColor.RED+" in the console. Your server will stop after setup finishes.");
+					}},80);
+				}
 				return true;
 			} else {
 				sender.sendMessage(ChatColor.RED+"This command can only be used through the console.");
